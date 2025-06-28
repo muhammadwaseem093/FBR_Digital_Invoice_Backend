@@ -1,5 +1,4 @@
 from passlib.context import CryptContext
-from cryptography.fernet import Fernet 
 from fastapi import Depends, HTTPException 
 from fastapi.security import OAuth2PasswordBearer
 from app.db.models import User
@@ -11,8 +10,6 @@ from datetime import datetime, timedelta
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY", "mysecret")
 ALGORITHM="HS256"
-SECRET_ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", Fernet.generate_key().decode())
-fernet = Fernet(SECRET_ENCRYPTION_KEY.encode())
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
