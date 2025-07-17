@@ -1,51 +1,31 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.schemas.user_schema import UserCreate, UserOut, SuperUserCreate
-from app.db.models import User 
-from app.core.security import hash_password 
-from app.db.database import SessionLocal
-from app.core.security import get_current_user 
+from app.db.database import get_db
+from app.schemas.user_schema import UserCreate, UserOut
+from app.services import user_services
+from app.core.security import get_current_user
+from app.dependencies.auth_guards import tenant_admin_only, superuser_only
+from app.models.user import User
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db 
-    finally:
-        db.close()
-        
-@router.post("/", response_model=UserOut)
-def create_user(
-    data:UserCreate,
-    db:Session = Depends(get_db),
-    current_user:User = Depends(get_current_user)
-    ):
-    if not current_user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not Authorized")
-    
-    existing = db.query(User).filter(User.username == data.username).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Username already exists")
-    new_user = User(username=data.username, password=hash_password(data.password), is_superuser=data.is_superuser)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+@router.post("", response_model=UserOut)
+def create_employee(
+    user: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(tenant_admin_only)
+):
+    if user_services.get_user_by_email(db, user.email):
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user.is_superuser = False
+    user.role = "employee"
+    user.tenant_id = current_user.id
+    return user_services.create_user(db, user)
 
+@router.get("", response_model=list[UserOut])
+def get_all_users(db: Session = Depends(get_db), current_user: User = Depends(superuser_only)):
+    return user_services.get_users(db)
 
-@router.post("/create-superuser", response_model=UserOut)
-def create_superuser(data:SuperUserCreate, db:Session = Depends(get_db)):
-    existing =db.query(User).filter(User.username == data.username).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Username Already Exists")
-    
-    new_user = User(
-        username=data.username,
-        password=hash_password(data.password),
-        is_superuser=True
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+@router.get("/me", response_model=UserOut)
+def get_my_profile(current_user: User = Depends(get_current_user)):
+    return current_user

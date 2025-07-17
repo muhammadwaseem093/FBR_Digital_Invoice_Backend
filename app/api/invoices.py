@@ -40,8 +40,8 @@ class FBRResponse(BaseModel):
 
 # Configuration
 FBR_CONFIG = {
-    "BASE_URL": "https://gw.fbr.gov.pk/DigitalInvoicing/v1",
-    "TOKEN": "906b1cd8-0d10-3a91-8234-8ec88e376bd7",
+    "BASE_URL": "https://gw.fbr.gov.pk/di_data/v1/di",
+    "TOKEN": "d48a0893-72a5-3d89-ac69-6abf9acc61b0",
     "TIMEOUT": 30
 }
 
@@ -50,7 +50,6 @@ def generate_headers():
     return {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {FBR_CONFIG['TOKEN']}",
-        "SECURITY-TOKEN": FBR_CONFIG["TOKEN"],
         "REQUEST-TIMESTAMP": datetime.now().strftime("%Y%m%d%H%M%S"),
         "DEVICE-TYPE": "API",
         "ACCEPT-LANGUAGE": "en-US"

@@ -1,10 +1,8 @@
 from fastapi import FastAPI
-from app.api import auth, users, credentials, invoices
+from app.api import auth, users, setup
 
 app = FastAPI()
 
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(setup.router, prefix="/setup", tags=["Setup"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
-app.include_router(credentials.router, prefix="/credentials", tags=["Credentials"])
-app.include_router(invoices.router, prefix="/invoices", tags=["Invoices"])
-
