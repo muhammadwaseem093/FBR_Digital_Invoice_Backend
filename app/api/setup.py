@@ -27,13 +27,20 @@ def create_superadmin(user: UserCreate, db: Session = Depends(get_db)):
 def create_tenant_user(
     user: UserCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(superuser_only)  # Only superadmin can create tenants
+    current_user: User = Depends(superuser_only)
 ):
-    tenant_id = uuid4()  # ✅ assign a fresh tenant ID to tenant admin
-    return user_services.create_user(
+    # Step 1: Create user with tenant_id=None
+    created_user = user_services.create_user(
         db,
         user,
         is_superuser=True,
         role="tenant_admin",
-        tenant_id=tenant_id
+        tenant_id=None  # temporarily None
     )
+
+    # Step 2: Update tenant_id to be their own ID
+    created_user.tenant_id = created_user.id
+    db.commit()
+    db.refresh(created_user)
+
+    return created_user
