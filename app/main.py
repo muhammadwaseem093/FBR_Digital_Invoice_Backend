@@ -5,9 +5,14 @@ from app.api import auth, users, setup
 
 app = FastAPI()
 
+origins = [
+        "http://localhost:8000",
+        "https://www.paktaxtools.com",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://www.paktaxtools.com"],  # frontend origin
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
